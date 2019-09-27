@@ -7,8 +7,10 @@ using System.Windows.Forms;
 using System.Drawing;
 using OxyPlot;
 using OxyPlot.Series;
+using OxyPlot.Axes;
 using OxyPlot.WindowsForms;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ISI_RGB
 {
@@ -30,10 +32,7 @@ namespace ISI_RGB
     {
         static async Task Main(string[] args)
         {
-            //Application.EnableVisualStyles();
-            //Application.SetCompatibleTextRenderingDefault(true);
-
-            Dispatch_args(args);
+            await Dispatch_args(args);
         }
 
         static async Task Dispatch_args(string[] args)
@@ -41,31 +40,37 @@ namespace ISI_RGB
             if (args.Length != 3)
             {
                 //qtde de argumentos invalidos
-                Console.WriteLine("Modo de usar: EmguApp.exe --v nome_do_video nome_do_grafico");
+                Console.WriteLine("Modo de usar: ISI_RGB.exe --v nome_do_video nome_do_grafico");
                 Environment.Exit(0);
             }
             else if (args[0] == "--v")
             {
-                var Processor = new VideoProcessor(args[1], args[2]);
-                Console.WriteLine("Iniciando processamento...");
-                var loop = Task.Run(() =>
+                var processorTask = Task.Run(() =>
                 {
-                    Processor.ProcessVideo();
-                    Processor.savePlot(args[2]);
+                    Application.EnableVisualStyles();
+                    var Processor = new VideoProcessor(args[1], args[2]);
+                    Console.WriteLine("Iniciando processamento...");
+                    var loop = Task.Run(() =>
+                    {
+                        Console.WriteLine("Processando...");
+                        Parallel.Invoke(
+                            () => Application.Run(Processor),
+                            () =>
+                            {
+                                Processor.ProcessVideo();
+                                Processor.SavePlot(args[2]);
+                            }
+                        );
+                    });
+                    loop.Wait();
                 });
-                loop.Wait();
 
-                var show = Task.Run(() =>
-                {
-                    Mat picture = new Mat(@"img.jpg"); // Pick some path on your disk!
-                    CvInvoke.Imshow("Hello World!", picture); // Open window with image
-                    CvInvoke.WaitKey(); // Render image and keep window opened until any key is pressed
-                });
+                processorTask.Wait();
             }
             else
             {
                 //Formato de argumento invalido
-                Console.WriteLine("Modo de usar: EmguApp.exe --v nome_do_video nome_do_grafico");
+                Console.WriteLine("Modo de usar: ISI_RGB.exe --v nome_do_video nome_do_grafico");
                 Environment.Exit(1);
             }
         }
@@ -86,13 +91,44 @@ namespace ISI_RGB
             this.InitializeComponent();
             this.FilePath = path;
             this.GraphPath = graph;
+            PrepararGrafico(graph);
+        }
+
+        public VideoProcessor()
+        {
+            this.InitializeComponent();
+            // Exibir tela de seleção
+            PrepararGrafico("Lorem");
+        }
+
+        private void PrepararGrafico(string graph)
+        {
             this.standard_pm = new PlotModel
             {
                 Title = "Canais RGB",
-                Subtitle = "Teste",
-                PlotType = PlotType.Cartesian,
+                Subtitle = graph,
+                PlotType = PlotType.XY,
+                PlotAreaBackground = OxyColors.White,
                 Background = OxyColors.White
             };
+
+            this.standard_pm.Axes.Add(
+                    new LinearAxis()
+                    {
+                        Position = OxyPlot.Axes.AxisPosition.Left,
+                        Maximum = 255,
+                        Minimum = 0,
+                    }
+                );
+
+            //O eixo X é plotado no fim do processamento
+            this.standard_pm.Axes.Add(
+            new LinearAxis()
+            {
+                Position = OxyPlot.Axes.AxisPosition.Bottom,
+                AbsoluteMinimum = 0,
+            }
+            );
 
             this.RedSeries = new LineSeries
             {
@@ -114,8 +150,7 @@ namespace ISI_RGB
             this.standard_pm.Series.Add(this.BlueSeries);
         }
 
-
-        public void ProcessVideo()
+        public async Task ProcessVideo()
         {
             try
             {
@@ -125,8 +160,7 @@ namespace ISI_RGB
                     if (capture.IsOpened)
                     {
                         var frame = capture.QueryFrame();
-
-                        VideoProcessingLoop(capture, frame);
+                        await VideoProcessingLoop(capture, frame);
                     }
                     else
                     {
@@ -138,13 +172,15 @@ namespace ISI_RGB
             {
                 Console.WriteLine($"Não foi possível encontrar o arquivo {this.FilePath}");
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 Console.WriteLine("Não foi possível abrir o arquivo");
             }
         }
-        private void VideoProcessingLoop(VideoCapture a, Mat b)
+        private async Task VideoProcessingLoop(VideoCapture a, Mat b)
         {
+            int frame_count = 0;
             while (true)
             {
                 var frame = a.QueryFrame();
@@ -152,10 +188,10 @@ namespace ISI_RGB
                 {
                     Channels pixel = this.PixelAverage(frame.ToImage<Bgr, byte>());
                     this.channels.Add(pixel);
+                    if(frame_count%5==0)
+                         Plot(frame_count/30.0,pixel);
 
-                    //CvInvoke.Imshow("VideoProcessor",frame);
-                    //this.Plot();
-                    //CvInvoke.WaitKey(); // Render image and keep window opened until any key is pressed
+                    frame_count++;
                 }
                 else
                 {
@@ -171,53 +207,38 @@ namespace ISI_RGB
             int height = image.Rows;
             int size = width * height;
 
-            //definir o valor dos canais
+            //definir o inicial valor dos canais
             double red = 0;
             double green = 0;
             double blue = 0;
 
             for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < width; j++)
+                for(int j= 0;j< width;j++)
                 {
                     blue += (double)Convert.ToInt32(image.Data[i, j, 0]) / size;
                     green += (double)Convert.ToInt32(image.Data[i, j, 1]) / size;
                     red += (double)Convert.ToInt32(image.Data[i, j, 2]) / size;
 
-                }
+                };
             }
             return new Channels(red, green, blue);
         }
 
-        private void Plot()
+        private void Plot(double seconds,Channels point)
         {
-            //const int framerate = 30;
-            int pointCount = this.channels.Count;
-            double[] red = new double[pointCount];
-            double[] green = new double[pointCount];
-            double[] blue = new double[pointCount];
+            this.RedSeries.Points.Add(new DataPoint(seconds,point.red));
+            this.GreenSeries.Points.Add(new DataPoint(seconds, point.green));
+            this.BlueSeries.Points.Add(new DataPoint(seconds, point.blue));
 
-            for (int i = 0; i < pointCount; i++)
-            {
-                red[i] = this.channels[i].red;
-                green[i] = this.channels[i].green;
-                blue[i] = this.channels[i].blue;
-                this.RedSeries.Points.Add(new DataPoint(i, red[i]));
-                this.GreenSeries.Points.Add(new DataPoint(i, green[i]));
-                this.BlueSeries.Points.Add(new DataPoint(i, blue[i]));
-            }
 
             this.Plotter.Model = standard_pm;
-            //Image<Bgr, byte> img = new Image<Bgr, byte>(this.plotter.GetBitmap(renderFirst:true, lowQuality:false));
-            //CvInvoke.Imshow("Plot", img.Mat);
-            //CvInvoke.WaitKey();
-
+            Plotter.Model.InvalidatePlot(true);
         }
 
-        public void savePlot(string filename)
+        public void SavePlot(string filename)
         {
-            this.Plot();
-            var PngExporter = new PngExporter { Width = 800, Height = 600, Background = OxyColors.White };
+            var PngExporter = new PngExporter { Width = 1024, Height = 768, Background = OxyColors.White };
             string path = $"plots/{filename}.jpg";
             PngExporter.Export(this.Plotter.ActualModel, path, 1024, 768);
             this.SaveCSV($"plots/{filename}.csv");
@@ -234,11 +255,11 @@ namespace ISI_RGB
             {
                 using (var str = new StreamWriter(fs))
                 {
-                    str.WriteLine("Segundos, R, G, B", fs);
+                    str.WriteLine("Segundos;R;G;B", fs);
                     for (int i = 0; i < channels.Count; i++)
                     {
                         Channels ch = channels[i];
-                        str.WriteLine("{0}, {1}, {2},{3}", i / 30.0, ch.red, ch.green, ch.blue);
+                        str.WriteLine("{0:2};{1:3};{2:3};{3:3}", i / 30.0, ch.red, ch.green, ch.blue);
                     }
                 }
             }

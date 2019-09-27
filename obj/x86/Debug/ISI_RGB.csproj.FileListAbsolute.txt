@@ -14,6 +14,7 @@
 /home/leon/Documents/dev/ISI_RGB/bin/Debug/OxyPlot.pdb
 /home/leon/Documents/dev/ISI_RGB/bin/Debug/OxyPlot.xml
 /home/leon/Documents/dev/ISI_RGB/bin/Debug/OxyPlot.WindowsForms.pdb
+/home/leon/Documents/dev/ISI_RGB/obj/x86/Debug/ISI_RGB.csprojAssemblyReference.cache
 /home/leon/Documents/dev/ISI_RGB/obj/x86/Debug/ISI_RGB.csproj.CoreCompileInputs.cache
 /home/leon/Documents/dev/ISI_RGB/obj/x86/Debug/ISI_RGB.csproj.CopyComplete
 /home/leon/Documents/dev/ISI_RGB/obj/x86/Debug/ISI_RGB.exe

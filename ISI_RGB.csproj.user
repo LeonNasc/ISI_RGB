@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
     <StartAction>Project</StartAction>
-    <StartArguments>--v videos/lights.mp4 lights</StartArguments>
+    <StartArguments>--v videos/sunset.mp4 sunseterino</StartArguments>
     <ExternalConsole>false</ExternalConsole>
   </PropertyGroup>
 </Project>
