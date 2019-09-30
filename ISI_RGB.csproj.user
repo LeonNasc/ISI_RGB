@@ -5,4 +5,8 @@
     <StartArguments>--v videos/sunset.mp4 sunseterino</StartArguments>
     <ExternalConsole>false</ExternalConsole>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'UI-default' ">
+    <StartAction>Project</StartAction>
+    <ExternalConsole>false</ExternalConsole>
+  </PropertyGroup>
 </Project>

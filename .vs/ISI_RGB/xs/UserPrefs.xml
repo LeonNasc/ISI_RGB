@@ -1,19 +1,18 @@
-﻿<Properties StartupConfiguration="{5977941D-EE01-4D5D-BD9F-13658E03582C}|Default">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Program.cs">
-    <Files>
-      <File FileName="Program.cs" Line="221" Column="1" />
-    </Files>
+﻿<Properties StartupConfiguration="{5977941D-EE01-4D5D-BD9F-13658E03582C}|UI-default">
+  <MonoDevelop.Ide.Workbench>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="ISI_RGB" expanded="True">
-            <Node name="ISI_RGB" expanded="True" selected="True" />
+            <Node name="ISI_RGB" expanded="True">
+              <Node name="MainMenu.cs" selected="True" />
+            </Node>
           </Node>
         </State>
       </Pad>
       <Pad Id="ClassPad">
         <State name="__root__">
-          <Node name="ISI_RGB" expanded="True" selected="True" />
+          <Node name="ISI_RGB" selected="True" />
         </State>
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
