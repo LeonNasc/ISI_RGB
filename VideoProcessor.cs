@@ -9,6 +9,7 @@ using OxyPlot.Series;
 using OxyPlot.Axes;
 using OxyPlot.WindowsForms;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace ISI_RGB
 {
@@ -95,7 +96,7 @@ namespace ISI_RGB
                     if (capture.IsOpened)
                     {
                         var frame = capture.QueryFrame();
-                        await VideoProcessingLoop(capture, frame);
+                        VideoProcessingLoop(capture, frame);
                     }
                     else
                     {
@@ -109,11 +110,10 @@ namespace ISI_RGB
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine("Não foi possível abrir o arquivo");
+                Console.WriteLine("Ocorreu uma exceção");
             }
         }
-        private async Task VideoProcessingLoop(VideoCapture a, Mat b)
+        private void VideoProcessingLoop(VideoCapture a, Mat b)
         {
             int frame_count = 0;
             while (true)
@@ -121,10 +121,16 @@ namespace ISI_RGB
                 var frame = a.QueryFrame();
                 if (frame != null)
                 {
-                    Channels pixel = this.PixelAverage(frame.ToImage<Bgr, byte>());
+                    var frame_img = frame.ToImage<Bgr, byte>();
+                    Channels pixel = this.PixelAverage(frame_img);
                     this.channels.Add(pixel);
-                    if(frame_count%5==0)
-                         Plot(frame_count/30.0,pixel);
+
+                    if (frame_count % 2 == 0)
+                    {
+                       Plot(frame_count / 30.0, pixel);
+                       mediaPixels.Image = newBitmapFromRGB(pixel.red, pixel.green, pixel.blue);
+                       videoFrames.Image = frame_img.ToBitmap();
+                    }
 
                     frame_count++;
                 }
@@ -134,6 +140,15 @@ namespace ISI_RGB
                     return;
                 }
             }
+        }
+
+        private Bitmap newBitmapFromRGB(double red, double green, double blue)
+        {
+            Bitmap b = new Bitmap(64, 64);
+            using (Graphics g = Graphics.FromImage(b))
+                g.Clear(Color.FromArgb((int)red, (int)green, (int)blue));
+
+            return b;
         }
 
         private Channels PixelAverage(Image<Bgr, byte> image)
@@ -149,7 +164,7 @@ namespace ISI_RGB
 
             for (int i = 0; i < height; i++)
             {
-                for(int j= 0;j< width;j++)
+                for (int j = 0; j < width; j++)
                 {
                     blue += (double)Convert.ToInt32(image.Data[i, j, 0]) / size;
                     green += (double)Convert.ToInt32(image.Data[i, j, 1]) / size;
@@ -160,15 +175,34 @@ namespace ISI_RGB
             return new Channels(red, green, blue);
         }
 
-        private void Plot(double seconds,Channels point)
+        private void Plot(double seconds, Channels point)
         {
-            this.RedSeries.Points.Add(new DataPoint(seconds,point.red));
+            this.RedSeries.Points.Add(new DataPoint(seconds, point.red));
             this.GreenSeries.Points.Add(new DataPoint(seconds, point.green));
             this.BlueSeries.Points.Add(new DataPoint(seconds, point.blue));
 
-
             this.Plotter.Model = standard_pm;
             Plotter.Model.InvalidatePlot(true);
+        }
+
+        private void VideoProcessor_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
 
         public void SavePlot(string filename)
@@ -176,7 +210,8 @@ namespace ISI_RGB
             var PngExporter = new PngExporter { Width = 1024, Height = 768, Background = OxyColors.White };
             string path = $"plots/{filename}.jpg";
 
-            if (!Directory.Exists("./plots")) {
+            if (!Directory.Exists("./plots"))
+            {
                 Directory.CreateDirectory("./plots");
             }
 

@@ -30,10 +30,9 @@ namespace ISI_RGB
             if (dr == DialogResult.OK)
             {
                 this.filepath = dialog.FileName;
+                if(dialog.FileName != "")
+                    this.Close();
             }
-
-            this.Close();
         }
-
     }
 }
