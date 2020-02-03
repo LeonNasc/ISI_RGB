@@ -3,43 +3,50 @@ using Emgu.CV.Structure;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using OxyPlot;
 using OxyPlot.Series;
 using OxyPlot.Axes;
 using OxyPlot.WindowsForms;
-using System.Threading.Tasks;
 using System.Drawing;
 
 namespace ISI_RGB
 {
-    partial class VideoProcessor : Form
+    class VideoProcessor
     {
-
-        private List<Channels> channels = new List<Channels>();
-        private string FilePath { get; set; }
+        private VideoCapture video_feed;
+        private List<Channels> buffered_channels = new List<Channels>();
         private string GraphPath { get; set; }
-        private PlotModel standard_pm;
+        private PlotModel plot_model;
         private LineSeries RedSeries, GreenSeries, BlueSeries;
+        private Bitmap mediaPixels;
+        private Bitmap curr_frame;
+        private int frame_rate;
 
         public VideoProcessor(string path, string graph)
         {
-            this.InitializeComponent();
-            this.FilePath = path;
+            this.GraphPath = graph;
+
+            try
+            {
+                this.video_feed = new VideoCapture(path);
+            }
+            catch (FileNotFoundException)
+            {
+                throw new FileNotFoundException("O arquivo não foi encontrado"); 
+            }
+
+            PrepararGrafico(graph);
+        }
+
+        public VideoProcessor(string graph)
+        {
             this.GraphPath = graph;
             PrepararGrafico(graph);
         }
 
-        public VideoProcessor()
-        {
-            this.InitializeComponent();
-            // Exibir tela de seleção
-            PrepararGrafico("Lorem");
-        }
-
         private void PrepararGrafico(string graph)
         {
-            this.standard_pm = new PlotModel
+            this.plot_model = new PlotModel
             {
                 Title = "Canais RGB",
                 Subtitle = graph,
@@ -48,7 +55,7 @@ namespace ISI_RGB
                 Background = OxyColors.White
             };
 
-            this.standard_pm.Axes.Add(
+            this.plot_model.Axes.Add(
                     new LinearAxis()
                     {
                         Position = OxyPlot.Axes.AxisPosition.Left,
@@ -58,12 +65,12 @@ namespace ISI_RGB
                 );
 
             //O eixo X é plotado no fim do processamento
-            this.standard_pm.Axes.Add(
-            new LinearAxis()
-            {
-                Position = OxyPlot.Axes.AxisPosition.Bottom,
-                AbsoluteMinimum = 0,
-            }
+            this.plot_model.Axes.Add(
+                new LinearAxis()
+                {
+                    Position = OxyPlot.Axes.AxisPosition.Bottom,
+                    AbsoluteMinimum = 0,
+                }
             );
 
             this.RedSeries = new LineSeries
@@ -81,70 +88,69 @@ namespace ISI_RGB
                 Color = OxyColors.Blue,
                 Title = "Blue"
             };
-            this.standard_pm.Series.Add(this.RedSeries);
-            this.standard_pm.Series.Add(this.GreenSeries);
-            this.standard_pm.Series.Add(this.BlueSeries);
+            this.plot_model.Series.Add(this.RedSeries);
+            this.plot_model.Series.Add(this.GreenSeries);
+            this.plot_model.Series.Add(this.BlueSeries);
         }
 
-        public async Task ProcessVideo()
+        public void ProcessVideo(PlotView ui_plotter)
         {
-            try
+            //using (var capture = new VideoCapture(this.FilePath)) // Loading video from file
+            using (this.video_feed) // Loading video from file
             {
-                //Capturar erro caso o video não exista
-                using (var capture = new VideoCapture(this.FilePath)) // Loading video from file
+                if (this.video_feed.IsOpened)
                 {
-                    if (capture.IsOpened)
-                    {
-                        var frame = capture.QueryFrame();
-                        VideoProcessingLoop(capture, frame);
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                Console.WriteLine($"Não foi possível encontrar o arquivo {this.FilePath}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Ocorreu uma exceção");
-            }
-        }
-        private void VideoProcessingLoop(VideoCapture a, Mat b)
-        {
-            int frame_count = 0;
-            while (true)
-            {
-                var frame = a.QueryFrame();
-                if (frame != null)
-                {
-                    var frame_img = frame.ToImage<Bgr, byte>();
-                    Channels pixel = this.PixelAverage(frame_img);
-                    this.channels.Add(pixel);
-
-                    if (frame_count % 2 == 0)
-                    {
-                       Plot(frame_count / 30.0, pixel);
-                       mediaPixels.Image = newBitmapFromRGB(pixel.red, pixel.green, pixel.blue);
-                       videoFrames.Image = frame_img.ToBitmap();
-                    }
-
-                    frame_count++;
+                    VideoProcessingLoop(video_feed, ui_plotter);
+                    this.SavePlot(this.GraphPath, ui_plotter);
                 }
                 else
                 {
-                    Console.WriteLine("Processamento finalizado");
                     return;
                 }
             }
         }
 
+        private void VideoProcessingLoop(VideoCapture a, PlotView ui_plotter)
+        {
+            this.frame_rate = (int) a.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.Fps);
+            int frame_number = 0;
+            var frame = video_feed.QueryFrame();
+
+            while (frame !=null)
+            {
+                var frame_img = frame.ToImage<Bgr, byte>();
+
+                // Plota a cada meio segundo
+                if (frame_number % (frame_rate/2) == 0)
+                {
+                   Channels pixel = this.PixelAverage(frame_img);
+                   this.mediaPixels = newBitmapFromRGB(pixel.red, pixel.green, pixel.blue);
+                   this.WriteToFile(pixel);
+
+                   Plot(frame_number / frame_rate, pixel, ui_plotter);
+                }
+
+                frame = video_feed.QueryFrame();
+                this.curr_frame = frame_img.ToBitmap();
+                frame_number++;
+            }
+            return;
+        }
+
+        private void WriteToFile(Channels pixel)
+        {
+            this.buffered_channels.Add(pixel);
+
+            if (this.buffered_channels.Count > 1200)
+            {
+                this.SaveCSV(this.GraphPath + ".csv");
+                this.buffered_channels.Clear();
+            }
+        }
+
         private Bitmap newBitmapFromRGB(double red, double green, double blue)
         {
-            Bitmap b = new Bitmap(64, 64);
+            Bitmap b = new Bitmap(32, 32);
             using (Graphics g = Graphics.FromImage(b))
                 g.Clear(Color.FromArgb((int)red, (int)green, (int)blue));
 
@@ -172,40 +178,21 @@ namespace ISI_RGB
 
                 };
             }
+
             return new Channels(red, green, blue);
         }
 
-        private void Plot(double seconds, Channels point)
+        private void Plot(double seconds, Channels point, PlotView plotter)
         {
             this.RedSeries.Points.Add(new DataPoint(seconds, point.red));
             this.GreenSeries.Points.Add(new DataPoint(seconds, point.green));
             this.BlueSeries.Points.Add(new DataPoint(seconds, point.blue));
 
-            this.Plotter.Model = standard_pm;
-            Plotter.Model.InvalidatePlot(true);
+            plotter.Model = plot_model;
+            plotter.Model.InvalidatePlot(true);
         }
 
-        private void VideoProcessor_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        public void SavePlot(string filename)
+        public void SavePlot(string filename, PlotView plotter)
         {
             var PngExporter = new PngExporter { Width = 1024, Height = 768, Background = OxyColors.White };
             string path = $"plots/{filename}.jpg";
@@ -214,10 +201,8 @@ namespace ISI_RGB
             {
                 Directory.CreateDirectory("./plots");
             }
-
-            PngExporter.Export(this.Plotter.ActualModel, path, 1024, 768);
+            PngExporter.Export(plotter.ActualModel, path, 1024, 768);
             this.SaveCSV($"plots/{filename}.csv");
-            Console.WriteLine($"Gráfico salvo com sucesso em {path}");
         }
 
         /// <summary>
@@ -226,18 +211,19 @@ namespace ISI_RGB
         /// <param name="nome">Nome do arquivo</param>
         internal void SaveCSV(string nome)
         {
-            using (FileStream fs = new FileStream(nome, FileMode.Create))
+            using (FileStream fs = new FileStream(nome, FileMode.Append))
             {
                 using (var str = new StreamWriter(fs))
                 {
                     str.WriteLine("Segundos;R;G;B", fs);
-                    for (int i = 0; i < channels.Count; i++)
+                    for (int i = 0; i < buffered_channels.Count; i++)
                     {
-                        Channels ch = channels[i];
-                        str.WriteLine("{0:2};{1:3};{2:3};{3:3}", i / 30.0, ch.red, ch.green, ch.blue);
+                        Channels ch = buffered_channels[i];
+                        str.WriteLine("{0:2};{1:3};{2:3};{3:3}", i / this.frame_rate, (int)ch.red, (int)ch.green, (int)ch.blue);
                     }
                 }
             }
         }
+
     }
 }

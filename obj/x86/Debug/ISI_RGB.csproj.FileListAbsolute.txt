@@ -26,7 +26,6 @@ E:\ISI_RGB\bin\Debug\ISI_RGB.exe.config
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.exe
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.pdb
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.MainMenu.resources
-E:\ISI_RGB\obj\x86\Debug\ISI_RGB.VideoProcessor.resources
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.csproj.GenerateResource.Cache
 E:\ISI_RGB\bin\Debug\x86\concrt140.dll
 E:\ISI_RGB\bin\Debug\x86\cvextern.dll
@@ -48,3 +47,4 @@ E:\ISI_RGB\bin\Debug\OxyPlot.WindowsForms.pdb
 E:\ISI_RGB\bin\Debug\OxyPlot.WindowsForms.xml
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.csprojResolveAssemblyReference.cache
 E:\ISI_RGB\obj\x86\Debug\ISI_RGB.Properties.Resources.resources
+E:\ISI_RGB\obj\x86\Debug\ISI_RGB.Frontend.resources

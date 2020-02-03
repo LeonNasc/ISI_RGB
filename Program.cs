@@ -29,22 +29,19 @@ namespace ISI_RGB
             thread.Start();
         }
 
-        static async Task Dispatch_args(string[] args)
+        static void Dispatch_args(string[] args)
         {
-            if (args.Length != 3)
-            {
-                var menu = new MainMenu();
-                Application.Run(menu);
-                if (menu.filepath != "")
-                {
-                    string nome_arquivo = Path.GetFileNameWithoutExtension(menu.filepath);
-                    ProcessarVideo(menu.filepath, $"gráfico_de_{nome_arquivo}");
-                }
+            var menu = new MainMenu();
+            Application.Run(menu);
 
-            }
-            else if (args[0] == "--v")
+            if (menu.filepath != null)
             {
-                ProcessarVideo(args[1], args[2]);
+                string nome_arquivo = Path.GetFileNameWithoutExtension(menu.filepath);
+                ProcessarVideo(menu.filepath, $"gráfico_de_{nome_arquivo}");
+            }
+            else
+            {
+                ProcessarVideo("", $"gráfico_de_{new DateTime().ToLocalTime()}");
             }
         }
 
@@ -53,27 +50,10 @@ namespace ISI_RGB
                     var processorTask = Task.Run(() =>
                     {
                         Application.EnableVisualStyles();
-                        var Processor = new VideoProcessor(path, nome_grafico);
-                        Console.WriteLine("Iniciando processamento...");
-                        var loop = Task.Run(() =>
-                        {
-                            Console.WriteLine("Processando...");
-                            Parallel.Invoke(
-                                () => Application.Run(Processor),
-                                () =>
-                                {
-                                    Processor.ProcessVideo();
-                                    Processor.SavePlot(nome_grafico);
-                                }
-                            );
-                        });
-                        loop.Wait();
+                        var Processor = new Frontend(path, nome_grafico);
+                        Application.Run(Processor);
                     });
-
                     processorTask.Wait();
-
         }
-
     }
-
 }
