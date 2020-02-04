@@ -23,7 +23,10 @@ namespace ISI_RGB
             {
                 this.filepath = dialog.FileName;
                 if(dialog.FileName != "")
-                    this.Close();
+                {
+                    Frontend fr = new Frontend(this.filepath, dialog.FileName);
+                    fr.ShowDialog();
+                }
             }
             else
             {
@@ -33,7 +36,8 @@ namespace ISI_RGB
 
         private void ExecutarBTN_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Frontend fr = new Frontend($"Gráfico de {DateTime.Now.ToLongDateString()}");
+            fr.ShowDialog();
         }
     }
 }

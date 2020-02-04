@@ -34,7 +34,7 @@ namespace ISI_RGB
             var menu = new MainMenu();
             Application.Run(menu);
 
-            if (menu.filepath != null)
+           /** if (menu.filepath != null)
             {
                 string nome_arquivo = Path.GetFileNameWithoutExtension(menu.filepath);
                 ProcessarVideo(menu.filepath, $"gráfico_de_{nome_arquivo}");
@@ -42,7 +42,7 @@ namespace ISI_RGB
             else
             {
                 ProcessarVideo("", $"gráfico_de_{new DateTime().ToLocalTime()}");
-            }
+            }**/
         }
 
         private static void ProcessarVideo(string path, string nome_grafico)
@@ -50,8 +50,6 @@ namespace ISI_RGB
                     var processorTask = Task.Run(() =>
                     {
                         Application.EnableVisualStyles();
-                        var Processor = new Frontend(path, nome_grafico);
-                        Application.Run(Processor);
                     });
                     processorTask.Wait();
         }

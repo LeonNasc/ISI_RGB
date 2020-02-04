@@ -4,6 +4,8 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using OxyPlot;
+using OxyPlot.Series;
 using OxyPlot.WindowsForms;
 
 namespace ISI_RGB
@@ -41,7 +43,8 @@ namespace ISI_RGB
             this.mediaPixels = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
+            this.startBTN = new System.Windows.Forms.Button();
+            this.stopBTN = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.videoFrames)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.mediaPixels)).BeginInit();
             this.SuspendLayout();
@@ -102,22 +105,33 @@ namespace ISI_RGB
             this.label2.Text = "Média dos pixels";
             this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
-            // button1
+            // startBTN
             // 
-            this.button1.Location = new System.Drawing.Point(-1, 160);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(143, 23);
-            this.button1.TabIndex = 5;
-            this.button1.Text = "Iniciar Leitura";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.startBTN.Location = new System.Drawing.Point(-1, 160);
+            this.startBTN.Name = "startBTN";
+            this.startBTN.Size = new System.Drawing.Size(143, 23);
+            this.startBTN.TabIndex = 5;
+            this.startBTN.Text = "Iniciar Leitura";
+            this.startBTN.UseVisualStyleBackColor = true;
+            this.startBTN.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // stopBTN
+            // 
+            this.stopBTN.Location = new System.Drawing.Point(-1, 190);
+            this.stopBTN.Name = "stopBTN";
+            this.stopBTN.Size = new System.Drawing.Size(143, 23);
+            this.stopBTN.TabIndex = 6;
+            this.stopBTN.Text = "Interromper Leitura";
+            this.stopBTN.UseVisualStyleBackColor = true;
+            this.stopBTN.Click += new System.EventHandler(this.stopBTN_Click);
             // 
             // Frontend
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(945, 446);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.stopBTN);
+            this.Controls.Add(this.startBTN);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.mediaPixels);
@@ -135,11 +149,14 @@ namespace ISI_RGB
 
         #endregion
 
-        private PlotView Plotter;
-        private System.Windows.Forms.PictureBox videoFrames;
-        private System.Windows.Forms.PictureBox mediaPixels;
+        public PlotView Plotter { set; get; }
+        public System.Windows.Forms.PictureBox videoFrames;
+        public System.Windows.Forms.PictureBox mediaPixels;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button startBTN;
+        private System.Windows.Forms.Button stopBTN;
+        public LineSeries RedSeries, GreenSeries, BlueSeries;
+        public PlotModel plot_model;
     }
 }
