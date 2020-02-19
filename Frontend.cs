@@ -6,6 +6,7 @@ using OxyPlot.Series;
 using OxyPlot.Axes;
 using OxyPlot.WindowsForms;
 using System.IO;
+using System.Linq;
 
 namespace ISI_RGB
 {
@@ -91,13 +92,14 @@ namespace ISI_RGB
         public void SavePlot(string filename)
         {
             var PngExporter = new PngExporter { Width = 1024, Height = 768, Background = OxyColors.White };
-            string path = $"plots/{filename}.jpg";
+            string path = $"plots/{filename.Split(Path.DirectorySeparatorChar).Last()}.jpg";
 
             if (!Directory.Exists("./plots"))
             {
                 Directory.CreateDirectory("./plots");
             }
-            PngExporter.Export(Plotter.ActualModel, $"plots/graph_{DateTime.Now.ToString("YYYY_mm_dd")}.png", 1024, 768);
+
+            PngExporter.Export(Plotter.ActualModel, $"plots/graph_{filename}.png", 1366, 768);
             this.vp.SaveCSV($"plots/{filename}.csv");
         }
 

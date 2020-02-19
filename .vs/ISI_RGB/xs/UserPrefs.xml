@@ -6,7 +6,7 @@
           <Node name="ISI_RGB" expanded="True">
             <Node name="ISI_RGB" expanded="True">
               <Node name="MainMenu.cs" expanded="True" />
-              <Node name="VideoProcessor.cs" expanded="True" selected="True" />
+              <Node name="VideoProcessor.cs" selected="True" />
             </Node>
           </Node>
         </State>

@@ -7,6 +7,7 @@ using OxyPlot;
 using OxyPlot.WindowsForms;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace ISI_RGB
 {
@@ -94,7 +95,8 @@ namespace ISI_RGB
 
             if (this.buffered_channels.Count > 1200)
             {
-                this.SaveCSV(this.parent.GraphPath + ".csv");
+                string name = this.parent.GraphPath.Split(Path.DirectorySeparatorChar).Last();
+                this.SaveCSV(name + "_" + new DateTime().ToFileTimeUtc() + ".csv");
                 this.buffered_channels.Clear();
             }
         }
@@ -129,7 +131,6 @@ namespace ISI_RGB
 
                 };
             }
-
             return new Channels(red, green, blue);
         }
 
@@ -142,8 +143,6 @@ namespace ISI_RGB
             parent.Plotter.Model = parent.plot_model;
             parent.Plotter.Model.InvalidatePlot(true);
         }
-
-
 
         /// <summary>
         /// Salva um CSV com os pontos de dados do vídeo
@@ -159,7 +158,7 @@ namespace ISI_RGB
                     for (int i = 0; i < buffered_channels.Count; i++)
                     {
                         Channels ch = buffered_channels[i];
-                        str.WriteLine("{0:2};{1:3};{2:3};{3:3}", i / this.frame_rate, (int)ch.red, (int)ch.green, (int)ch.blue);
+                        str.WriteLine($"{i / this.frame_rate};{(int)ch.red};{(int)ch.green};{(int)ch.blue}");
                     }
                 }
             }
